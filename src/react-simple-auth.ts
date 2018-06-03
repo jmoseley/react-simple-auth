@@ -3,7 +3,7 @@ const sessionKey = 'session'
 export interface IProvider<T> {
   buildAuthorizeUrl(): string
   extractError(redirectUrl: string): Error | undefined
-  extractSession(redirectUrl: string): T
+  extractSession(redirectUrl: string): Promise<T>
   validateSession(session: T): boolean
   getAccessToken(session: T, resourceId: string): string
   getSignOutUrl(redirectUrl: string): string
@@ -84,9 +84,10 @@ export const service: IAuthenticationService = {
         }
 
         // Window was closed, reached redirect.html and correctly added tokens to the url
-        const session = provider.extractSession(redirectUrl)
-        storage.setItem(sessionKey, JSON.stringify(session))
-        resolve(session)
+        provider.extractSession(redirectUrl).then(session => {
+          storage.setItem(sessionKey, JSON.stringify(session))
+          resolve(session)
+        });
       }
 
       checkWindow(loginWindow)
